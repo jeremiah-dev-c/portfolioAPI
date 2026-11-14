@@ -17,10 +17,13 @@ builder.Services.AddIdentityCore<IdentityUser>()
     .AddSignInManager()
     .AddEntityFrameworkStores<PortfolioDbContext>();
 
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("EditorOrAdmin", policy => policy.RequireRole("Editor", "Admin"));
+
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IBlogpostService, BlogpostService>();
 
-builder.Services.AddValidation();
+builder.Services.AddValidation();   
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -39,6 +42,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapProjectEndpoints();
 app.MapBlogpostEndpoints();

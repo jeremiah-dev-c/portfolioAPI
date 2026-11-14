@@ -11,9 +11,9 @@ public static class BlogpostEndpoints
 
         group.MapGet("/", GetAll);
         group.MapGet("/{id:int}", GetById);
-        group.MapPost("/", Create);
-        group.MapPut("/{id:int}", Update);
-        group.MapDelete("/{id:int}", Delete);
+        group.MapPost("/", Create).RequireAuthorization("EditorOrAdmin");
+        group.MapPut("/{id}", Update).RequireAuthorization("EditorOrAdmin");
+        group.MapDelete("/{id}", Delete).RequireAuthorization("EditorOrAdmin");
     }
 
     private static async Task<IResult> GetAll(IBlogpostService service)
