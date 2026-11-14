@@ -36,5 +36,6 @@ if (app.Environment.IsDevelopment())
 
 app.MapProjectEndpoints();
 app.MapBlogpostEndpoints();
+app.MapAuthEndpoints();
 
 app.Run();
