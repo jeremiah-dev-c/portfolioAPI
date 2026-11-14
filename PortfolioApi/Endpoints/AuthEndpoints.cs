@@ -10,6 +10,7 @@ public static class AuthEndpoints
         var group = app.MapGroup("/api/auth").WithTags("Auth");
 
         group.MapPost("/register", Register);
+        group.MapPost("/login", Login);
     }
 
     private static async Task<IResult> Register(RegisterRequest request, UserManager<IdentityUser> userManager)
@@ -27,6 +28,19 @@ public static class AuthEndpoints
         }
 
         await userManager.AddToRoleAsync(user, "Gast");
+        return TypedResults.Ok();
+    }
+
+    private static async Task<IResult> Login(LoginRequest request, SignInManager<IdentityUser> signInManager)
+    {
+        var result = await signInManager.PasswordSignInAsync(
+            request.Email, request.Password, isPersistent: false, lockoutOnFailure: false);
+
+        if (!result.Succeeded)
+        {
+            return TypedResults.Unauthorized();
+        }
+
         return TypedResults.Ok();
     }
 }
