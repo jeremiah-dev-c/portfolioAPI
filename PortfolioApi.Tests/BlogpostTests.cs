@@ -128,4 +128,36 @@ public class BlogpostTests : IDisposable
         // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
+    
+    [Fact]
+    public async Task Delete_AlsEditor_Geeft204EnBlogpostIsWeg()
+    {
+        // Arrange
+        var editorClient = await _factory.CreateClientAsRoleAsync("Editor");
+        var body = new { titel = "Mijn blog", inhoud = "Inhoud van de blog" };
+        var postResponse = await editorClient.PostAsJsonAsync("/api/blogposts", body);
+        var gemaakt = await postResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var id = gemaakt.GetProperty("id").GetInt32();
+
+        // Act
+        var response = await editorClient.DeleteAsync($"/api/blogposts/{id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var daarna = await _client.GetAsync($"/api/blogposts/{id}");
+        Assert.Equal(HttpStatusCode.NotFound, daarna.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_OnbekendId_Geeft404()
+    {
+        // Arrange
+        var editorClient = await _factory.CreateClientAsRoleAsync("Editor");
+
+        // Act
+        var response = await editorClient.DeleteAsync("/api/blogposts/999");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }

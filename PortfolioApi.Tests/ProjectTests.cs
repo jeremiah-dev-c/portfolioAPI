@@ -169,4 +169,34 @@ public class ProjectTests : IDisposable
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+    [Fact]
+    public async Task Delete_AlsEditor_Geeft204EnProjectIsWeg()
+    {
+        // Arrange
+        var editorClient = await _factory.CreateClientAsRoleAsync("Editor");
+        var postResponse = await editorClient.PostAsJsonAsync("/api/projects", GeldigProject());
+        var gemaakt = await postResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var id = gemaakt.GetProperty("id").GetInt32();
+
+        // Act
+        var response = await editorClient.DeleteAsync($"/api/projects/{id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var daarna = await _client.GetAsync($"/api/projects/{id}");
+        Assert.Equal(HttpStatusCode.NotFound, daarna.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_OnbekendId_Geeft404()
+    {
+        // Arrange
+        var editorClient = await _factory.CreateClientAsRoleAsync("Editor");
+
+        // Act
+        var response = await editorClient.DeleteAsync("/api/projects/999");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }
