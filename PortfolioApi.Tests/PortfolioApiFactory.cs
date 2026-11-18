@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using PortfolioApi.Data;
+using System.Net.Http.Json;
+using Microsoft.AspNetCore.Identity;
 
 namespace PortfolioApi.Tests;
 
@@ -35,6 +37,27 @@ public class PortfolioApiFactory : WebApplicationFactory<Program>
             services.AddDbContext<PortfolioDbContext>(options =>
                 options.UseSqlite(_connection));
         });
+    }
+    
+    public async Task<HttpClient> CreateClientAsRoleAsync(string role)
+    {
+        var client = CreateClient();
+        var email = $"{role.ToLower()}@test.nl";
+        var password = "Test123!";
+
+        await client.PostAsJsonAsync("/api/auth/register", new { email, password });
+
+        if (role != "Gast")
+        {
+            using var scope = Services.CreateScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            var user = await userManager.FindByEmailAsync(email);
+            await userManager.AddToRoleAsync(user!, role);
+        }
+
+        await client.PostAsJsonAsync("/api/auth/login", new { email, password });
+
+        return client;
     }
 
     protected override void Dispose(bool disposing)
