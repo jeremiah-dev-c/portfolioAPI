@@ -160,4 +160,40 @@ public class BlogpostTests : IDisposable
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+    
+    [Fact]
+    public async Task Put_AlsEditor_Geeft200EnPastDeBlogpostAan()
+    {
+        // Arrange
+        var editorClient = await _factory.CreateClientAsRoleAsync("Editor");
+        var body = new { titel = "Mijn blog", inhoud = "Inhoud van de blog" };
+        var postResponse = await editorClient.PostAsJsonAsync("/api/blogposts", body);
+        var gemaakt = await postResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var id = gemaakt.GetProperty("id").GetInt32();
+        var aanpassing = new { titel = "Aangepaste titel", inhoud = "Nieuwe inhoud" };
+
+        // Act
+        var response = await editorClient.PutAsJsonAsync($"/api/blogposts/{id}", aanpassing);
+        var bijgewerkt = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("Aangepaste titel", bijgewerkt.GetProperty("titel").GetString());
+        var opgehaald = await _client.GetFromJsonAsync<JsonElement>($"/api/blogposts/{id}");
+        Assert.Equal("Aangepaste titel", opgehaald.GetProperty("titel").GetString());
+    }
+
+    [Fact]
+    public async Task Put_OnbekendId_Geeft404()
+    {
+        // Arrange
+        var editorClient = await _factory.CreateClientAsRoleAsync("Editor");
+        var body = new { titel = "Aangepaste titel", inhoud = "Nieuwe inhoud" };
+
+        // Act
+        var response = await editorClient.PutAsJsonAsync("/api/blogposts/999", body);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }

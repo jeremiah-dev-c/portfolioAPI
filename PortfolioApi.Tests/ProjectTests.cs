@@ -199,4 +199,45 @@ public class ProjectTests : IDisposable
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+    
+    [Fact]
+    public async Task Put_AlsEditor_Geeft200EnPastHetProjectAan()
+    {
+        // Arrange
+        var editorClient = await _factory.CreateClientAsRoleAsync("Editor");
+        var postResponse = await editorClient.PostAsJsonAsync("/api/projects", GeldigProject());
+        var gemaakt = await postResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var id = gemaakt.GetProperty("id").GetInt32();
+        var aanpassing = new
+        {
+            titel = "Aangepaste titel",
+            beschrijving = "Een nieuwe beschrijving",
+            categorie = "Frontend",
+            gitHubUrl = "https://github.com/jeremiah-dev-c/portfolioAPI",
+            datum = "2026-11-02T00:00:00"
+        };
+
+        // Act
+        var response = await editorClient.PutAsJsonAsync($"/api/projects/{id}", aanpassing);
+        var bijgewerkt = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("Aangepaste titel", bijgewerkt.GetProperty("titel").GetString());
+        var opgehaald = await _client.GetFromJsonAsync<JsonElement>($"/api/projects/{id}");
+        Assert.Equal("Aangepaste titel", opgehaald.GetProperty("titel").GetString());
+    }
+
+    [Fact]
+    public async Task Put_OnbekendId_Geeft404()
+    {
+        // Arrange
+        var editorClient = await _factory.CreateClientAsRoleAsync("Editor");
+
+        // Act
+        var response = await editorClient.PutAsJsonAsync("/api/projects/999", GeldigProject());
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }
